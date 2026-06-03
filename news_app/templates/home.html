@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Главная
+{% endblock %}
+
+{% block content %}
+
+<h1>Все новости</h1>
+
+{% if news_list %}
+
+    {% for news in news_list %}
+
+        <div class="card mb-3 {% if news.date == today %}today-news{% endif %}">
+
+            <div class="card-body">
+
+                <h3>
+                    <a href="/news/{{ news.id }}/">
+                        {{ news.title }}
+                    </a>
+                </h3>
+
+                <p>
+                    {{ news.summary }}
+                </p>
+
+                <small>
+                    {{ news.date }}
+                </small>
+
+            </div>
+
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <div class="alert alert-warning">
+        Пока новостей нет.
+    </div>
+
+{% endif %}
+
+
+{% endblock %}
+
