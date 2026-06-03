@@ -1,7 +1,7 @@
 import json
 import os
 
-from datetime import date
+from datetime import date, datetime
 
 from django.shortcuts import render, redirect
 from django.http import Http404
@@ -40,7 +40,7 @@ def home_view(request):
     news_list = load_news()
 
     news_list.sort(
-        key=lambda x: x['date'],
+        key=lambda x: datetime.strptime(x['date'], "%Y-%m-%d"),
         reverse=True
     )
 
