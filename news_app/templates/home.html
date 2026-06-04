@@ -12,12 +12,12 @@
 
     {% for news in news_list %}
 
-        <div class="card mb-3 {% if news.date == today %}today-news{% endif %}">
+        <div class="card mb-3">
 
             <div class="card-body">
 
                 <h3>
-                    <a href="/news/{{ news.id }}/">
+                    <a href="{% url 'detail' news.id %}">
                         {{ news.title }}
                     </a>
                 </h3>
@@ -27,8 +27,12 @@
                 </p>
 
                 <small>
-                    {{ news.date }}
+                    {{ news.date_created|date:"Y-m-d" }}
                 </small>
+
+                {% if news.author == user %}
+                    <span class="badge bg-success">Ваша новость</span>
+                {% endif %}
 
             </div>
 

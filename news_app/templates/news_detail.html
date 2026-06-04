@@ -1,26 +1,44 @@
 {% extends 'base.html' %}
 
 {% block title %}
-{{ news.title }}
+Новость
 {% endblock %}
 
 {% block content %}
 
-<h1>{{ news.title }}</h1>
+<div class="card">
 
-<p>
-    <strong>Дата:</strong>
-    {{ news.date }}
-</p>
+    <div class="card-body">
 
-<hr>
+        <h2>{{ news.title }}</h2>
 
-<p>
-    {{ news.content }}
-</p>
+        <p>{{ news.summary }}</p>
 
-<a href="/" class="btn btn-secondary">
-    Назад
-</a>
+        <hr>
+
+        <p>{{ news.content }}</p>
+
+        <small>
+            Автор: {{ news.author.username }} <br>
+            Дата: {{ news.date_created|date:"Y-m-d H:i" }}
+        </small>
+
+        <hr>
+
+        {% if news.author == user %}
+
+            <a href="{% url 'edit' news.id %}" class="btn btn-warning">
+                Редактировать
+            </a>
+
+            <a href="{% url 'delete' news.id %}" class="btn btn-danger">
+                Удалить
+            </a>
+
+        {% endif %}
+
+    </div>
+
+</div>
 
 {% endblock %}

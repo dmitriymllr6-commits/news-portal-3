@@ -1,13 +1,18 @@
 import json
 import os
-
 from datetime import date, datetime
-
-from django.shortcuts import render, redirect
 from django.http import Http404
-
 from .forms import NewsForm
-
+from django.contrib.auth import login
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import logout
+from django.contrib.auth.models import User
+from .forms import RegisterForm
+from django.contrib.auth.decorators import login_required
+from .models import News
+from .forms import NewsForm
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponseForbidden
 
 DATA_FILE = os.path.join(
     os.path.dirname(__file__),
@@ -35,40 +40,49 @@ def save_news(news_list):
         )
 
 
+
+
 def home_view(request):
 
-    news_list = load_news()
-
-    news_list.sort(
-        key=lambda x: datetime.strptime(x['date'], "%Y-%m-%d"),
-        reverse=True
-    )
+    news_list = News.objects.all().order_by('-date_created')
 
     return render(
         request,
         'home.html',
         {
-            'news_list': news_list,
-            'today': str(date.today())
+            'news_list': news_list
         }
     )
 
 
+
 def news_detail_view(request, news_id):
 
-    news_list = load_news()
+    news = get_object_or_404(News, id=news_id)
 
-    for news in news_list:
-        if news['id'] == news_id:
-            return render(
-                request,
-                'news_detail.html',
-                {'news': news}
-            )
-
-    raise Http404("Новость не найдена")
+    return render(
+        request,
+        'news_detail.html',
+        {'news': news}
+    )
 
 
+@login_required
+def profile_view(request):
+    return render(request, 'profile.html')
+
+@login_required
+def profile_delete_view(request):
+
+    if request.method == 'POST':
+        user = request.user
+        logout(request)
+        user.delete()
+        return redirect('home')
+
+    return render(request, 'profile_delete.html')
+
+@login_required
 def add_news_view(request):
 
     if request.method == 'POST':
@@ -77,24 +91,11 @@ def add_news_view(request):
 
         if form.is_valid():
 
-            news_list = load_news()
+            news = form.save(commit=False)
 
-            new_id = max(
-                (n['id'] for n in news_list),
-                default=0
-            ) + 1
+            news.author = request.user
 
-            news = {
-                'id': new_id,
-                'title': form.cleaned_data['title'],
-                'summary': form.cleaned_data['summary'],
-                'content': form.cleaned_data['content'],
-                'date': str(date.today())
-            }
-
-            news_list.append(news)
-
-            save_news(news_list)
+            news.save()
 
             return redirect('success')
 
@@ -107,6 +108,66 @@ def add_news_view(request):
         {'form': form}
     )
 
+def news_edit_view(request, news_id):
+
+    news = get_object_or_404(News, id=news_id)
+
+    if news.author != request.user:
+        return HttpResponseForbidden("Нет доступа")
+
+    if request.method == 'POST':
+
+        form = NewsForm(request.POST, instance=news)
+
+        if form.is_valid():
+            form.save()
+            return redirect('detail', news_id=news.id)
+
+    else:
+        form = NewsForm(instance=news)
+
+    return render(request, 'news_form.html', {
+        'form': form
+    })
+
+def news_delete_view(request, news_id):
+
+    news = get_object_or_404(News, id=news_id)
+
+    if news.author != request.user:
+        return HttpResponseForbidden("Нет доступа")
+
+    if request.method == 'POST':
+        news.delete()
+        return redirect('home')
+
+    return render(request, 'news_confirm_delete.html', {
+        'news': news
+    })
 
 def success_view(request):
     return render(request, 'success.html')
+
+def register_view(request):
+
+    if request.method == 'POST':
+
+        form = RegisterForm(request.POST)
+
+        if form.is_valid():
+
+            user = form.save()
+
+            login(request, user)
+
+            return redirect('home')
+
+    else:
+
+        form = RegisterForm()
+
+    return render(
+        request,
+        'register.html',
+        {'form': form}
+    )

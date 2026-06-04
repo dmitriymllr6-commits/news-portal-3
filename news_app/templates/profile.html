@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Профиль пользователя</h2>
+
+<p>Имя: {{ user.username }}</p>
+<p>Email: {{ user.email }}</p>
+
+<hr>
+
+<a href="{% url 'profile_delete' %}" class="btn btn-danger">
+    Удалить аккаунт
+</a>
+
+{% endblock %}
